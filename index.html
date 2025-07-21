@@ -204,6 +204,15 @@
         soundToggle.addEventListener('change', (e) => { suoniAbilitati = e.target.checked; if(suoniAbilitati) inizializzaAudio(); });
         modeToggle.addEventListener('change', (e) => { modalitaAvanzata = e.target.checked; });
         
+        // NUOVO: Listener per la funzione di test "salta livello"
+        document.addEventListener('keydown', (e) => {
+            // Se il gioco è in corso e viene premuto il tasto 'l' (minuscolo o maiuscolo)
+            if (inGioco && e.key.toLowerCase() === 'l') {
+                console.log('DEBUG: Salto al livello successivo.');
+                prossimoLivello();
+            }
+        });
+
         function avviaGioco() {
             livello = 0;
             vite = 0;
@@ -227,13 +236,12 @@
         async function prossimoLivello() {
             livello++;
             sequenzaUtente = [];
+            gameBoard.style.pointerEvents = 'none'; // Disabilita i click durante le transizioni
             
             if (modalitaAvanzata && livello > 1 && (livello - 1) % 5 === 0) {
                 infoDisplay.textContent = 'Rimescolo... 🎲';
-                gameBoard.style.pointerEvents = 'none';
                 await new Promise(r => setTimeout(r, 1500));
                 mischiaDisposizioneColori();
-                gameBoard.style.pointerEvents = 'auto';
             }
             
             if (livello > 1 && (livello - 1) % 5 === 0) {

@@ -68,12 +68,9 @@
         .tasto.illuminato div { filter: brightness(2.5); box-shadow: 0 0 25px currentColor, 0 0 40px currentColor; }
 
         .controlli { margin-top: 1rem; display: flex; flex-direction: column; align-items: center; gap: 1rem; }
-        #start-button {
-            padding: 12px 30px; font-size: 1.2rem; font-weight: 600; border-radius: 50px; border: none;
-            cursor: pointer; background-color: var(--testo); color: var(--sfondo-scuro);
-            transition: opacity 0.4s, transform 0.4s; transform: scale(1);
-        }
-        #start-button.hidden { opacity: 0; transform: scale(0.8); pointer-events: none; }
+        .fine-partita-bottoni { display: flex; gap: 15px; }
+        #start-button, #share-button { padding: 12px 25px; font-size: 1.2rem; font-weight: 600; border-radius: 50px; border: none; cursor: pointer; background-color: var(--testo); color: var(--sfondo-scuro); transition: opacity 0.4s, transform 0.4s; transform: scale(1); }
+        #start-button.hidden, #share-button.hidden { opacity: 0; transform: scale(0.8); pointer-events: none; }
         
         .control-switch { display: flex; align-items: center; gap: 10px; }
         .switch { position: relative; display: inline-block; width: 50px; height: 28px; }
@@ -100,7 +97,10 @@
         </div>
         <div class="game-board" id="game-board"></div>
         <div class="controlli">
-            <button id="start-button">Inizia</button>
+            <div class="fine-partita-bottoni">
+                <button id="start-button">Inizia</button>
+                <button id="share-button" class="hidden">Condividi 📤</button>
+            </div>
             <div class="control-switch">
                 <span>Suoni</span>
                 <label class="switch">
@@ -123,6 +123,7 @@
         
         let sequenzaCorretta = [], sequenzaUtente = [];
         let livello = 0, recordNormale = 0, recordAvanzato = 0, vite = 0;
+        let punteggioFinale = 0;
         let inGioco = false, suoniAbilitati = true, modalitaAvanzata = false;
         
         const infoDisplay = document.getElementById('info-display');
@@ -133,6 +134,7 @@
         const gameBoard = document.getElementById('game-board');
         const soundToggle = document.getElementById('sound-toggle');
         const modeToggle = document.getElementById('mode-toggle');
+        const shareButton = document.getElementById('share-button');
 
         let audioCtx;
         const suoni = {};
@@ -197,6 +199,7 @@
         }
 
         startButton.addEventListener('click', avviaGioco);
+        shareButton.addEventListener('click', condividiRisultato);
         gameBoard.addEventListener('click', gestisciClickUtente);
         soundToggle.addEventListener('change', (e) => { suoniAbilitati = e.target.checked; if(suoniAbilitati) inizializzaAudio(); });
         modeToggle.addEventListener('change', (e) => { modalitaAvanzata = e.target.checked; });
@@ -204,11 +207,14 @@
         function avviaGioco() {
             livello = 0;
             vite = 0;
+            punteggioFinale = 0;
             inGioco = true;
             sequenzaCorretta = []; 
             startButton.classList.add('hidden');
+            shareButton.classList.add('hidden');
             modeToggle.disabled = true;
             soundToggle.disabled = true;
+            infoDisplay.style.color = 'var(--testo)';
             aggiornaDisplayVite();
             if (modalitaAvanzata) {
                 mischiaDisposizioneColori();
@@ -321,7 +327,7 @@
             inGioco = false;
             infoDisplay.style.color = 'var(--c-rosso)';
             
-            const punteggioFinale = livello - 1;
+            punteggioFinale = livello - 1;
             
             if (modalitaAvanzata) {
                 if (punteggioFinale > recordAvanzato) {
@@ -347,8 +353,34 @@
             aggiornaDisplayRecord();
             startButton.textContent = 'Ricomincia';
             startButton.classList.remove('hidden');
+            shareButton.classList.remove('hidden');
             modeToggle.disabled = false;
             soundToggle.disabled = false;
+        }
+
+        async function condividiRisultato() {
+            const modalitaTesto = modalitaAvanzata ? 'Avanzata' : 'Normale';
+            const linkGioco = window.location.href;
+
+            const testoDaCondividere = `Ho raggiunto il livello ${punteggioFinale} in Memoria Musicale e Visiva (modalità ${modalitaTesto})! 🧠🎵\n\nRiesci a battere il mio record? Gioca anche tu:\n${linkGioco}`;
+
+            if (navigator.share) {
+                try {
+                    await navigator.share({
+                        title: 'Nuovo Punteggio a Memoria Musicale!',
+                        text: testoDaCondividere,
+                    });
+                } catch (err) {
+                    console.error('Errore durante la condivisione:', err);
+                }
+            } else {
+                try {
+                    await navigator.clipboard.writeText(testoDaCondividere);
+                    alert('Risultato copiato negli appunti! Ora puoi incollarlo dove vuoi.');
+                } catch (err) {
+                    console.error('Impossibile copiare il testo:', err);
+                }
+            }
         }
         
         // --- Setup Iniziale ---

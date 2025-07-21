@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memoria Musicale e Visiva</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#2c3e50">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --c-rosso: #e53935; --c-verde: #43a047; --c-blu: #1e88e5;
+            --c-giallo: #fdd835; --c-viola: #8e24aa; --c-arancione: #fb8c00;
+            --c-rosa: #ec407a; --c-ciano: #26a69a; --c-lime: #c0ca33;
+            --sfondo-scuro: #2c3e50; --sfondo-chiaro: #34495e;
+            --testo: #ecf0f1;
+        }
+
+        @keyframes rainbow-text { 0% { color: hsl(0, 100%, 80%); } 100% { color: hsl(360, 100%, 80%); } }
+        @keyframes shake-error { 0%, 100% { transform: translateX(0); } 25%, 75% { transform: translateX(-5px); } 50% { transform: translateX(5px); } }
+        @keyframes new-record-glow { 0%, 100% { text-shadow: 0 0 8px #fff, 0 0 10px var(--c-giallo); color: #fff; } 50% { text-shadow: none; color: var(--testo); } }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--sfondo-scuro);
+            background-image: radial-gradient(circle, var(--sfondo-chiaro) 0%, var(--sfondo-scuro) 100%);
+            color: var(--testo);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            text-align: center;
+            overflow: hidden;
+        }
+        
+        #powered-by {
+            position: fixed; top: 10px; left: 10px; padding: 5px 10px;
+            background-color: rgba(0, 0, 0, 0.2); border-radius: 5px;
+            font-size: 6pt; font-weight: bold; animation: rainbow-text 8s linear infinite; z-index: 10;
+        }
+
+        .game-container { display: flex; flex-direction: column; align-items: center; gap: 1rem; }
+        .display-area { min-height: 85px; display: flex; flex-direction: column; justify-content: center; margin-top: 1rem; }
+        #info-display { font-size: 1.5rem; font-weight: 600; transition: color 0.3s; }
+
+        .stats-container { display: flex; flex-direction: column; align-items: center; gap: 5px; margin-top: 10px; }
+        #record-normale-display, #record-avanzato-display, #vite-display { font-size: 1rem; color: #bdc3c7; }
+        .new-record-animation { animation: new-record-glow 1.5s ease-in-out; }
+
+        .game-board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; width: 340px; }
+        .game-board.error { animation: shake-error 0.4s; }
+
+        .tasto {
+            width: 100px; height: 100px; border-radius: 50%; 
+            background: linear-gradient(145deg, rgba(255,255,255,0.1), rgba(0,0,0,0.2));
+            box-shadow: 5px 5px 15px rgba(0,0,0,0.3), -5px -5px 15px rgba(255,255,255,0.05);
+            cursor: pointer; transition: all 0.1s ease-out;
+            display: flex; justify-content: center; align-items: center;
+        }
+        .tasto div { width: 90%; height: 90%; border-radius: 50%; transition: background-color 0.2s, filter 0.2s, box-shadow 0.2s; }
+        .tasto:active { box-shadow: inset 5px 5px 15px rgba(0,0,0,0.3), inset -5px -5px 15px rgba(255,255,255,0.05); transform: scale(0.98); }
+        .tasto.illuminato div { filter: brightness(2.5); box-shadow: 0 0 25px currentColor, 0 0 40px currentColor; }
+
+        .controlli { margin-top: 1rem; display: flex; flex-direction: column; align-items: center; gap: 1rem; }
+        #start-button {
+            padding: 12px 30px; font-size: 1.2rem; font-weight: 600; border-radius: 50px; border: none;
+            cursor: pointer; background-color: var(--testo); color: var(--sfondo-scuro);
+            transition: opacity 0.4s, transform 0.4s; transform: scale(1);
+        }
+        #start-button.hidden { opacity: 0; transform: scale(0.8); pointer-events: none; }
+        
+        .control-switch { display: flex; align-items: center; gap: 10px; }
+        .switch { position: relative; display: inline-block; width: 50px; height: 28px; }
+        .switch input { display: none; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #7f8c8d; transition: .4s; border-radius: 28px; }
+        .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--c-verde); }
+        input:disabled + .slider { background-color: #555; cursor: not-allowed; }
+        input:checked + .slider:before { transform: translateX(22px); }
+    </style>
+</head>
+<body>
+
+    <div id="powered-by">Powered By Michele Rosati</div>
+
+    <div class="game-container">
+        <div class="display-area">
+            <div id="info-display">Premi "Inizia" per giocare</div>
+            <div class="stats-container">
+                <div id="record-normale-display"></div>
+                <div id="record-avanzato-display"></div>
+                <div id="vite-display"></div>
+            </div>
+        </div>
+        <div class="game-board" id="game-board"></div>
+        <div class="controlli">
+            <button id="start-button">Inizia</button>
+            <div class="control-switch">
+                <span>Suoni</span>
+                <label class="switch">
+                    <input type="checkbox" id="sound-toggle" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="control-switch">
+                <span>Avanzata</span>
+                <label class="switch">
+                    <input type="checkbox" id="mode-toggle">
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const coloriBase = ['rosso', 'verde', 'blu', 'giallo', 'viola', 'arancione', 'rosa', 'ciano', 'lime'];
+        
+        let sequenzaCorretta = [], sequenzaUtente = [];
+        let livello = 0, recordNormale = 0, recordAvanzato = 0, vite = 0;
+        let inGioco = false, suoniAbilitati = true, modalitaAvanzata = false;
+        
+        const infoDisplay = document.getElementById('info-display');
+        const recordNormaleDisplay = document.getElementById('record-normale-display');
+        const recordAvanzatoDisplay = document.getElementById('record-avanzato-display');
+        const viteDisplay = document.getElementById('vite-display');
+        const startButton = document.getElementById('start-button');
+        const gameBoard = document.getElementById('game-board');
+        const soundToggle = document.getElementById('sound-toggle');
+        const modeToggle = document.getElementById('mode-toggle');
+
+        let audioCtx;
+        const suoni = {};
+        const frequenze = {
+            rosso: 261.63, verde: 293.66, blu: 329.63, giallo: 349.23,
+            viola: 392.00, arancione: 440.00, rosa: 493.88, ciano: 523.25, lime: 587.33
+        };
+
+        function generaPulsanti() {
+            gameBoard.innerHTML = '';
+            coloriBase.forEach(colore => {
+                const tasto = document.createElement('div');
+                tasto.classList.add('tasto');
+                tasto.id = `tasto-${colore}`;
+                tasto.dataset.colore = colore;
+                tasto.style.color = `var(--c-${colore})`;
+                const beforeElement = document.createElement('div');
+                beforeElement.style.backgroundColor = `var(--c-${colore})`;
+                tasto.appendChild(beforeElement);
+                gameBoard.appendChild(tasto);
+            });
+        }
+        
+        function caricaRecord() {
+            const recordNormaleSalvato = localStorage.getItem('recordMemoriaNormale');
+            recordNormale = recordNormaleSalvato ? parseInt(recordNormaleSalvato, 10) : 0;
+            const recordAvanzatoSalvato = localStorage.getItem('recordMemoriaAvanzata');
+            recordAvanzato = recordAvanzatoSalvato ? parseInt(recordAvanzatoSalvato, 10) : 0;
+            aggiornaDisplayRecord();
+        }
+
+        function aggiornaDisplayRecord() {
+            recordNormaleDisplay.textContent = `🏆 Record Normale: ${recordNormale}`;
+            recordAvanzatoDisplay.textContent = `🚀 Record Avanzato: ${recordAvanzato}`;
+        }
+
+        function aggiornaDisplayVite() { viteDisplay.textContent = `❤️ Vite: ${vite}`; }
+        
+        function inizializzaAudio() {
+            if (audioCtx) return;
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            for (const colore in frequenze) {
+                const oscillator = audioCtx.createOscillator();
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(frequenze[colore], audioCtx.currentTime);
+                const gainNode = audioCtx.createGain();
+                gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                oscillator.start();
+                suoni[colore] = gainNode;
+            }
+        }
+
+        function riproduciSuono(colore) {
+            if (!suoniAbilitati || !audioCtx) return;
+            const gainNode = suoni[colore];
+            gainNode.gain.cancelScheduledValues(audioCtx.currentTime);
+            gainNode.gain.setValueAtTime(gainNode.gain.value, audioCtx.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.3, audioCtx.currentTime + 0.05);
+            gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.2);
+        }
+
+        startButton.addEventListener('click', avviaGioco);
+        gameBoard.addEventListener('click', gestisciClickUtente);
+        soundToggle.addEventListener('change', (e) => { suoniAbilitati = e.target.checked; if(suoniAbilitati) inizializzaAudio(); });
+        modeToggle.addEventListener('change', (e) => { modalitaAvanzata = e.target.checked; });
+        
+        function avviaGioco() {
+            livello = 0;
+            vite = 0;
+            inGioco = true;
+            sequenzaCorretta = []; 
+            startButton.classList.add('hidden');
+            modeToggle.disabled = true;
+            soundToggle.disabled = true;
+            aggiornaDisplayVite();
+            if (modalitaAvanzata) {
+                mischiaDisposizioneColori();
+            } else {
+                generaPulsanti(); 
+            }
+            prossimoLivello();
+        }
+
+        async function prossimoLivello() {
+            livello++;
+            sequenzaUtente = [];
+            
+            if (modalitaAvanzata && livello > 1 && (livello - 1) % 5 === 0) {
+                infoDisplay.textContent = 'Rimescolo... 🎲';
+                gameBoard.style.pointerEvents = 'none';
+                await new Promise(r => setTimeout(r, 1500));
+                mischiaDisposizioneColori();
+                gameBoard.style.pointerEvents = 'auto';
+            }
+            
+            if (livello > 1 && (livello - 1) % 5 === 0) {
+                vite++;
+                aggiornaDisplayVite();
+                infoDisplay.textContent = `Vita Extra! ✨`;
+                await new Promise(r => setTimeout(r, 1500));
+            }
+            
+            infoDisplay.textContent = `Livello ${livello}`;
+            const nuovoColore = coloriBase[Math.floor(Math.random() * coloriBase.length)];
+            sequenzaCorretta.push(nuovoColore);
+            mostraSequenza();
+        }
+
+        async function mostraSequenza() {
+            gameBoard.style.pointerEvents = 'none';
+            let tempoIlluminato = modalitaAvanzata ? 400 : 500;
+            let pausaTraTasti = modalitaAvanzata ? 150 : 200;
+
+            if (livello >= 15) { tempoIlluminato = 250; pausaTraTasti = 75; } 
+            else if (livello >= 10) { tempoIlluminato = 300; pausaTraTasti = 100; }
+            else if (livello >= 5) { tempoIlluminato = 400; pausaTraTasti = 150; }
+            
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            for(const colore of sequenzaCorretta) {
+                if (!inGioco) return;
+                const tasto = document.getElementById(`tasto-${colore}`);
+                tasto.classList.add('illuminato');
+                riproduciSuono(colore);
+                await new Promise(resolve => setTimeout(resolve, tempoIlluminato));
+                tasto.classList.remove('illuminato');
+                await new Promise(resolve => setTimeout(resolve, pausaTraTasti));
+            }
+            if (inGioco) {
+               infoDisplay.textContent = 'Tocca a te!';
+               gameBoard.style.pointerEvents = 'auto';
+            }
+        }
+
+        async function gestisciClickUtente(e) {
+            if (!inGioco) return;
+            const tasto = e.target.closest('.tasto');
+            if (!tasto) return;
+            inizializzaAudio();
+            const coloreCliccato = tasto.dataset.colore;
+            tasto.classList.add('illuminato');
+            riproduciSuono(coloreCliccato);
+            setTimeout(() => tasto.classList.remove('illuminato'), 250);
+            sequenzaUtente.push(coloreCliccato);
+            const indiceMossa = sequenzaUtente.length - 1;
+            if (sequenzaUtente[indiceMossa] !== sequenzaCorretta[indiceMossa]) {
+                gestisciErrore();
+                return;
+            }
+            if (sequenzaUtente.length === sequenzaCorretta.length) {
+                infoDisplay.textContent = 'Ottimo! ✅';
+                gameBoard.style.pointerEvents = 'none';
+                setTimeout(prossimoLivello, 1200);
+            }
+        }
+        
+        function mischiaDisposizioneColori() {
+            const coloriMisti = [...coloriBase].sort(() => Math.random() - 0.5);
+            const tasti = Array.from(gameBoard.children);
+            tasti.forEach((tasto, index) => {
+                const nuovoColore = coloriMisti[index];
+                tasto.id = `tasto-${nuovoColore}`;
+                tasto.dataset.colore = nuovoColore;
+                tasto.style.color = `var(--c-${nuovoColore})`;
+                tasto.querySelector('div').style.backgroundColor = `var(--c-${nuovoColore})`;
+            });
+        }
+
+        function gestisciErrore() {
+            gameBoard.classList.add('error');
+            setTimeout(() => gameBoard.classList.remove('error'), 500);
+            if (vite > 0) {
+                vite--;
+                aggiornaDisplayVite();
+                infoDisplay.textContent = `Hai usato una vita! Attenzione...`;
+                sequenzaUtente = [];
+                gameBoard.style.pointerEvents = 'none';
+                setTimeout(() => mostraSequenza(), 1500);
+            } else {
+                fineGiocoDefinitivo();
+            }
+        }
+
+        function fineGiocoDefinitivo() {
+            inGioco = false;
+            infoDisplay.style.color = 'var(--c-rosso)';
+            
+            const punteggioFinale = livello - 1;
+            
+            if (modalitaAvanzata) {
+                if (punteggioFinale > recordAvanzato) {
+                    recordAvanzato = punteggioFinale;
+                    localStorage.setItem('recordMemoriaAvanzata', recordAvanzato);
+                    infoDisplay.textContent = `Nuovo Record Avanzato: ${punteggioFinale}! 🎉`;
+                    recordAvanzatoDisplay.classList.add('new-record-animation');
+                    setTimeout(()=> recordAvanzatoDisplay.classList.remove('new-record-animation'), 1500);
+                } else {
+                    infoDisplay.textContent = `Hai perso! 😭 Punteggio: ${punteggioFinale}`;
+                }
+            } else {
+                if (punteggioFinale > recordNormale) {
+                    recordNormale = punteggioFinale;
+                    localStorage.setItem('recordMemoriaNormale', recordNormale);
+                    infoDisplay.textContent = `Nuovo Record Normale: ${punteggioFinale}! 🎉`;
+                    recordNormaleDisplay.classList.add('new-record-animation');
+                    setTimeout(()=> recordNormaleDisplay.classList.remove('new-record-animation'), 1500);
+                } else {
+                    infoDisplay.textContent = `Hai perso! 😭 Punteggio: ${punteggioFinale}`;
+                }
+            }
+            aggiornaDisplayRecord();
+            startButton.textContent = 'Ricomincia';
+            startButton.classList.remove('hidden');
+            modeToggle.disabled = false;
+            soundToggle.disabled = false;
+        }
+        
+        // --- Setup Iniziale ---
+        generaPulsanti();
+        caricaRecord();
+        aggiornaDisplayVite();
+    </script>
+    
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').then(registration => {
+            console.log('ServiceWorker registrato con successo:', registration.scope);
+          }).catch(error => {
+            console.log('Registrazione ServiceWorker fallita:', error);
+          });
+        });
+      }
+    </script>
+
+</body>
+</html>

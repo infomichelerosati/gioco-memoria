@@ -46,11 +46,11 @@
         }
 
         .game-container { display: flex; flex-direction: column; align-items: center; gap: 1rem; }
-        .display-area { min-height: 85px; display: flex; flex-direction: column; justify-content: center; margin-top: 1rem; }
+        .display-area { min-height: 100px; display: flex; flex-direction: column; justify-content: center; margin-top: 1rem; }
         #info-display { font-size: 1.5rem; font-weight: 600; transition: color 0.3s; }
 
         .stats-container { display: flex; flex-direction: column; align-items: center; gap: 5px; margin-top: 10px; }
-        #record-normale-display, #record-avanzato-display, #vite-display { font-size: 1rem; color: #bdc3c7; }
+        #record-facile-display, #record-normale-display, #record-avanzato-display, #vite-display, #aiuti-display { font-size: 0.9rem; color: #bdc3c7; }
         .new-record-animation { animation: new-record-glow 1.5s ease-in-out; }
 
         .game-board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; width: 340px; }
@@ -67,10 +67,10 @@
         .tasto:active { box-shadow: inset 5px 5px 15px rgba(0,0,0,0.3), inset -5px -5px 15px rgba(255,255,255,0.05); transform: scale(0.98); }
         .tasto.illuminato div { filter: brightness(2.5); box-shadow: 0 0 25px currentColor, 0 0 40px currentColor; }
 
-        .controlli { margin-top: 1rem; display: flex; flex-direction: column; align-items: center; gap: 1rem; }
+        .controlli { margin-top: 1rem; display: flex; flex-direction: column; align-items: center; gap: 0.8rem; }
         .fine-partita-bottoni { display: flex; gap: 15px; }
-        #start-button, #share-button { padding: 12px 25px; font-size: 1.2rem; font-weight: 600; border-radius: 50px; border: none; cursor: pointer; background-color: var(--testo); color: var(--sfondo-scuro); transition: opacity 0.4s, transform 0.4s; transform: scale(1); }
-        #start-button.hidden, #share-button.hidden { opacity: 0; transform: scale(0.8); pointer-events: none; }
+        #start-button, #share-button, #repeat-button { padding: 10px 20px; font-size: 1.1rem; font-weight: 600; border-radius: 50px; border: none; cursor: pointer; background-color: var(--testo); color: var(--sfondo-scuro); transition: opacity 0.4s, transform 0.4s; transform: scale(1); }
+        #start-button.hidden, #share-button.hidden, #repeat-button.hidden { opacity: 0; transform: scale(0.8); pointer-events: none; }
         
         .control-switch { display: flex; align-items: center; gap: 10px; }
         .switch { position: relative; display: inline-block; width: 50px; height: 28px; }
@@ -88,11 +88,13 @@
 
     <div class="game-container">
         <div class="display-area">
-            <div id="info-display">Premi "Inizia" per giocare</div>
+            <div id="info-display">Scegli la modalità e inizia</div>
             <div class="stats-container">
+                <div id="record-facile-display"></div>
                 <div id="record-normale-display"></div>
                 <div id="record-avanzato-display"></div>
                 <div id="vite-display"></div>
+                <div id="aiuti-display"></div>
             </div>
         </div>
         <div class="game-board" id="game-board"></div>
@@ -101,19 +103,18 @@
                 <button id="start-button">Inizia</button>
                 <button id="share-button" class="hidden">Condividi 📤</button>
             </div>
+            <button id="repeat-button" class="hidden">Mostra di Nuovo 💡</button>
             <div class="control-switch">
                 <span>Suoni</span>
-                <label class="switch">
-                    <input type="checkbox" id="sound-toggle" checked>
-                    <span class="slider"></span>
-                </label>
+                <label class="switch"><input type="checkbox" id="sound-toggle" checked><span class="slider"></span></label>
+            </div>
+            <div class="control-switch">
+                <span>Facile</span>
+                <label class="switch"><input type="checkbox" id="easy-mode-toggle"><span class="slider"></span></label>
             </div>
             <div class="control-switch">
                 <span>Avanzata</span>
-                <label class="switch">
-                    <input type="checkbox" id="mode-toggle">
-                    <span class="slider"></span>
-                </label>
+                <label class="switch"><input type="checkbox" id="advanced-mode-toggle"><span class="slider"></span></label>
             </div>
         </div>
     </div>
@@ -122,19 +123,23 @@
         const coloriBase = ['rosso', 'verde', 'blu', 'giallo', 'viola', 'arancione', 'rosa', 'ciano', 'lime'];
         
         let sequenzaCorretta = [], sequenzaUtente = [];
-        let livello = 0, recordNormale = 0, recordAvanzato = 0, vite = 0;
+        let livello = 0, recordFacile = 0, recordNormale = 0, recordAvanzato = 0, vite = 0, aiutiRimasti = 0;
         let punteggioFinale = 0;
-        let inGioco = false, suoniAbilitati = true, modalitaAvanzata = false;
+        let inGioco = false, suoniAbilitati = true, modalitaFacile = false, modalitaAvanzata = false;
         
         const infoDisplay = document.getElementById('info-display');
+        const recordFacileDisplay = document.getElementById('record-facile-display');
         const recordNormaleDisplay = document.getElementById('record-normale-display');
         const recordAvanzatoDisplay = document.getElementById('record-avanzato-display');
         const viteDisplay = document.getElementById('vite-display');
+        const aiutiDisplay = document.getElementById('aiuti-display');
         const startButton = document.getElementById('start-button');
         const gameBoard = document.getElementById('game-board');
         const soundToggle = document.getElementById('sound-toggle');
-        const modeToggle = document.getElementById('mode-toggle');
+        const easyModeToggle = document.getElementById('easy-mode-toggle');
+        const advancedModeToggle = document.getElementById('advanced-mode-toggle');
         const shareButton = document.getElementById('share-button');
+        const repeatButton = document.getElementById('repeat-button');
 
         let audioCtx;
         const suoni = {};
@@ -159,84 +164,68 @@
         }
         
         function caricaRecord() {
-            const recordNormaleSalvato = localStorage.getItem('recordMemoriaNormale');
-            recordNormale = recordNormaleSalvato ? parseInt(recordNormaleSalvato, 10) : 0;
-            const recordAvanzatoSalvato = localStorage.getItem('recordMemoriaAvanzata');
-            recordAvanzato = recordAvanzatoSalvato ? parseInt(recordAvanzatoSalvato, 10) : 0;
+            recordFacile = parseInt(localStorage.getItem('recordMemoriaFacile') || '0', 10);
+            recordNormale = parseInt(localStorage.getItem('recordMemoriaNormale') || '0', 10);
+            recordAvanzato = parseInt(localStorage.getItem('recordMemoriaAvanzata') || '0', 10);
             aggiornaDisplayRecord();
         }
 
         function aggiornaDisplayRecord() {
+            recordFacileDisplay.textContent = `😇 Record Facile: ${recordFacile}`;
             recordNormaleDisplay.textContent = `🏆 Record Normale: ${recordNormale}`;
             recordAvanzatoDisplay.textContent = `🚀 Record Avanzato: ${recordAvanzato}`;
         }
 
         function aggiornaDisplayVite() { viteDisplay.textContent = `❤️ Vite: ${vite}`; }
+        function aggiornaDisplayAiuti() { aiutiDisplay.textContent = `💡 Aiuti: ${aiutiRimasti}`; }
         
-        function inizializzaAudio() {
-            if (audioCtx) return;
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            for (const colore in frequenze) {
-                const oscillator = audioCtx.createOscillator();
-                oscillator.type = 'sine';
-                oscillator.frequency.setValueAtTime(frequenze[colore], audioCtx.currentTime);
-                const gainNode = audioCtx.createGain();
-                gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
-                oscillator.connect(gainNode);
-                gainNode.connect(audioCtx.destination);
-                oscillator.start();
-                suoni[colore] = gainNode;
-            }
-        }
-
-        function riproduciSuono(colore) {
-            if (!suoniAbilitati || !audioCtx) return;
-            const gainNode = suoni[colore];
-            gainNode.gain.cancelScheduledValues(audioCtx.currentTime);
-            gainNode.gain.setValueAtTime(gainNode.gain.value, audioCtx.currentTime);
-            gainNode.gain.linearRampToValueAtTime(0.3, audioCtx.currentTime + 0.05);
-            gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.2);
-        }
+        function inizializzaAudio() { if (audioCtx) return; audioCtx = new (window.AudioContext || window.webkitAudioContext)(); for (const colore in frequenze) { const oscillator = audioCtx.createOscillator(); oscillator.type = 'sine'; oscillator.frequency.setValueAtTime(frequenze[colore], audioCtx.currentTime); const gainNode = audioCtx.createGain(); gainNode.gain.setValueAtTime(0, audioCtx.currentTime); oscillator.connect(gainNode); gainNode.connect(audioCtx.destination); oscillator.start(); suoni[colore] = gainNode; } }
+        function riproduciSuono(colore) { if (!suoniAbilitati || !audioCtx) return; const gainNode = suoni[colore]; gainNode.gain.cancelScheduledValues(audioCtx.currentTime); gainNode.gain.setValueAtTime(gainNode.gain.value, audioCtx.currentTime); gainNode.gain.linearRampToValueAtTime(0.3, audioCtx.currentTime + 0.05); gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.2); }
 
         startButton.addEventListener('click', avviaGioco);
         shareButton.addEventListener('click', condividiRisultato);
+        repeatButton.addEventListener('click', usaAiutoMostraSequenza);
         gameBoard.addEventListener('click', gestisciClickUtente);
         soundToggle.addEventListener('change', (e) => { suoniAbilitati = e.target.checked; if(suoniAbilitati) inizializzaAudio(); });
-        modeToggle.addEventListener('change', (e) => { modalitaAvanzata = e.target.checked; });
         
-        // NUOVO: Listener per la funzione di test "salta livello"
-        document.addEventListener('keydown', (e) => {
-            // Se il gioco è in corso e viene premuto il tasto 'l' (minuscolo o maiuscolo)
-            if (inGioco && e.key.toLowerCase() === 'l') {
-                console.log('DEBUG: Salto al livello successivo.');
-                prossimoLivello();
-            }
+        easyModeToggle.addEventListener('change', (e) => {
+            modalitaFacile = e.target.checked;
+            if (modalitaFacile) advancedModeToggle.checked = false;
+            modalitaAvanzata = false;
         });
-
+        advancedModeToggle.addEventListener('change', (e) => {
+            modalitaAvanzata = e.target.checked;
+            if (modalitaAvanzata) easyModeToggle.checked = false;
+            modalitaFacile = false;
+        });
+        
         function avviaGioco() {
             livello = 0;
-            vite = 0;
+            vite = modalitaFacile ? 2 : 0;
+            aiutiRimasti = modalitaFacile ? 3 : 0;
             punteggioFinale = 0;
             inGioco = true;
             sequenzaCorretta = []; 
             startButton.classList.add('hidden');
             shareButton.classList.add('hidden');
-            modeToggle.disabled = true;
+            repeatButton.classList.add('hidden');
+            easyModeToggle.disabled = true;
+            advancedModeToggle.disabled = true;
             soundToggle.disabled = true;
             infoDisplay.style.color = 'var(--testo)';
             aggiornaDisplayVite();
-            if (modalitaAvanzata) {
-                mischiaDisposizioneColori();
-            } else {
-                generaPulsanti(); 
-            }
+            aggiornaDisplayAiuti();
+            aiutiDisplay.style.display = modalitaFacile ? 'block' : 'none';
+
+            if (modalitaAvanzata) { mischiaDisposizioneColori(); } 
+            else { generaPulsanti(); }
             prossimoLivello();
         }
 
         async function prossimoLivello() {
             livello++;
             sequenzaUtente = [];
-            gameBoard.style.pointerEvents = 'none'; // Disabilita i click durante le transizioni
+            gameBoard.style.pointerEvents = 'none';
             
             if (modalitaAvanzata && livello > 1 && (livello - 1) % 5 === 0) {
                 infoDisplay.textContent = 'Rimescolo... 🎲';
@@ -244,7 +233,7 @@
                 mischiaDisposizioneColori();
             }
             
-            if (livello > 1 && (livello - 1) % 5 === 0) {
+            if (!modalitaFacile && livello > 1 && (livello - 1) % 5 === 0) {
                 vite++;
                 aggiornaDisplayVite();
                 infoDisplay.textContent = `Vita Extra! ✨`;
@@ -259,6 +248,7 @@
 
         async function mostraSequenza() {
             gameBoard.style.pointerEvents = 'none';
+            repeatButton.classList.add('hidden');
             let tempoIlluminato = modalitaAvanzata ? 400 : 500;
             let pausaTraTasti = modalitaAvanzata ? 150 : 200;
 
@@ -279,6 +269,9 @@
             if (inGioco) {
                infoDisplay.textContent = 'Tocca a te!';
                gameBoard.style.pointerEvents = 'auto';
+               if (modalitaFacile && aiutiRimasti > 0) {
+                   repeatButton.classList.remove('hidden');
+               }
             }
         }
 
@@ -300,6 +293,7 @@
             if (sequenzaUtente.length === sequenzaCorretta.length) {
                 infoDisplay.textContent = 'Ottimo! ✅';
                 gameBoard.style.pointerEvents = 'none';
+                repeatButton.classList.add('hidden');
                 setTimeout(prossimoLivello, 1200);
             }
         }
@@ -325,6 +319,7 @@
                 infoDisplay.textContent = `Hai usato una vita! Attenzione...`;
                 sequenzaUtente = [];
                 gameBoard.style.pointerEvents = 'none';
+                repeatButton.classList.add('hidden');
                 setTimeout(() => mostraSequenza(), 1500);
             } else {
                 fineGiocoDefinitivo();
@@ -337,57 +332,59 @@
             
             punteggioFinale = livello - 1;
             
-            if (modalitaAvanzata) {
-                if (punteggioFinale > recordAvanzato) {
-                    recordAvanzato = punteggioFinale;
-                    localStorage.setItem('recordMemoriaAvanzata', recordAvanzato);
-                    infoDisplay.textContent = `Nuovo Record Avanzato: ${punteggioFinale}! 🎉`;
-                    recordAvanzatoDisplay.classList.add('new-record-animation');
-                    setTimeout(()=> recordAvanzatoDisplay.classList.remove('new-record-animation'), 1500);
-                } else {
-                    infoDisplay.textContent = `Hai perso! 😭 Punteggio: ${punteggioFinale}`;
-                }
+            let recordKey, recordValue, recordDisplayElement;
+            if(modalitaFacile) {
+                recordKey = 'recordMemoriaFacile';
+                recordValue = recordFacile;
+                recordDisplayElement = recordFacileDisplay;
+            } else if (modalitaAvanzata) {
+                recordKey = 'recordMemoriaAvanzata';
+                recordValue = recordAvanzato;
+                recordDisplayElement = recordAvanzatoDisplay;
             } else {
-                if (punteggioFinale > recordNormale) {
-                    recordNormale = punteggioFinale;
-                    localStorage.setItem('recordMemoriaNormale', recordNormale);
-                    infoDisplay.textContent = `Nuovo Record Normale: ${punteggioFinale}! 🎉`;
-                    recordNormaleDisplay.classList.add('new-record-animation');
-                    setTimeout(()=> recordNormaleDisplay.classList.remove('new-record-animation'), 1500);
-                } else {
-                    infoDisplay.textContent = `Hai perso! 😭 Punteggio: ${punteggioFinale}`;
-                }
+                recordKey = 'recordMemoriaNormale';
+                recordValue = recordNormale;
+                recordDisplayElement = recordNormaleDisplay;
             }
-            aggiornaDisplayRecord();
+
+            if (punteggioFinale > recordValue) {
+                localStorage.setItem(recordKey, punteggioFinale);
+                infoDisplay.textContent = `Nuovo Record: ${punteggioFinale}! 🎉`;
+                recordDisplayElement.classList.add('new-record-animation');
+                setTimeout(()=> recordDisplayElement.classList.remove('new-record-animation'), 1500);
+            } else {
+                infoDisplay.textContent = `Hai perso! 😭 Punteggio: ${punteggioFinale}`;
+            }
+            caricaRecord();
+            
             startButton.textContent = 'Ricomincia';
             startButton.classList.remove('hidden');
             shareButton.classList.remove('hidden');
-            modeToggle.disabled = false;
+            repeatButton.classList.add('hidden');
+            easyModeToggle.disabled = false;
+            advancedModeToggle.disabled = false;
             soundToggle.disabled = false;
         }
 
         async function condividiRisultato() {
-            const modalitaTesto = modalitaAvanzata ? 'Avanzata' : 'Normale';
+            let modalitaTesto = 'Normale';
+            if (modalitaFacile) modalitaTesto = 'Facile';
+            if (modalitaAvanzata) modalitaTesto = 'Avanzata';
             const linkGioco = window.location.href;
-
             const testoDaCondividere = `Ho raggiunto il livello ${punteggioFinale} in Memoria Musicale e Visiva (modalità ${modalitaTesto})! 🧠🎵\n\nRiesci a battere il mio record? Gioca anche tu:\n${linkGioco}`;
+            if (navigator.share) { try { await navigator.share({ title: 'Nuovo Punteggio a Memoria Musicale!', text: testoDaCondividere }); } catch (err) { console.error('Errore condivisione:', err); } } 
+            else { try { await navigator.clipboard.writeText(testoDaCondividere); alert('Risultato copiato negli appunti!'); } catch (err) { console.error('Errore copia:', err); } }
+        }
 
-            if (navigator.share) {
-                try {
-                    await navigator.share({
-                        title: 'Nuovo Punteggio a Memoria Musicale!',
-                        text: testoDaCondividere,
-                    });
-                } catch (err) {
-                    console.error('Errore durante la condivisione:', err);
-                }
-            } else {
-                try {
-                    await navigator.clipboard.writeText(testoDaCondividere);
-                    alert('Risultato copiato negli appunti! Ora puoi incollarlo dove vuoi.');
-                } catch (err) {
-                    console.error('Impossibile copiare il testo:', err);
-                }
+        function usaAiutoMostraSequenza() {
+            if (aiutiRimasti > 0) {
+                aiutiRimasti--;
+                aggiornaDisplayAiuti();
+                sequenzaUtente = [];
+                mostraSequenza();
+            }
+            if (aiutiRimasti === 0) {
+                repeatButton.classList.add('hidden');
             }
         }
         
@@ -395,16 +392,14 @@
         generaPulsanti();
         caricaRecord();
         aggiornaDisplayVite();
+        aggiornaDisplayAiuti();
+        aiutiDisplay.style.display = 'none';
     </script>
     
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js').then(registration => {
-            console.log('ServiceWorker registrato con successo:', registration.scope);
-          }).catch(error => {
-            console.log('Registrazione ServiceWorker fallita:', error);
-          });
+          navigator.serviceWorker.register('/sw.js').then(r => console.log('ServiceWorker OK')).catch(e => console.log('ServiceWorker Fallito:', e));
         });
       }
     </script>

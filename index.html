@@ -50,8 +50,9 @@
         #info-display { font-size: 1.5rem; font-weight: 600; transition: color 0.3s; }
 
         .stats-container { display: flex; flex-direction: column; align-items: center; gap: 5px; margin-top: 10px; }
-        #record-facile-display, #record-normale-display, #record-avanzato-display, #vite-display, #aiuti-display { font-size: 0.9rem; color: #bdc3c7; }
+        #record-facile-display, #record-normale-display, #record-avanzato-display { font-size: 0.9rem; color: #bdc3c7; }
         .new-record-animation { animation: new-record-glow 1.5s ease-in-out; }
+        #vite-display, #aiuti-display { font-size: 0.9rem; color: #bdc3c7; }
 
         .game-board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; width: 340px; }
         .game-board.error { animation: shake-error 0.4s; }
@@ -67,12 +68,12 @@
         .tasto:active { box-shadow: inset 5px 5px 15px rgba(0,0,0,0.3), inset -5px -5px 15px rgba(255,255,255,0.05); transform: scale(0.98); }
         .tasto.illuminato div { filter: brightness(2.5); box-shadow: 0 0 25px currentColor, 0 0 40px currentColor; }
 
-        .controlli { margin-top: 1rem; display: flex; flex-direction: column; align-items: center; gap: 0.8rem; }
+        /* MODIFIED: Reduced gap to bring controls closer */
+        .controlli { margin-top: 1rem; display: flex; flex-direction: column; align-items: center; gap: 12px; }
         .fine-partita-bottoni { display: flex; gap: 15px; }
         #start-button, #share-button, #repeat-button { padding: 10px 20px; font-size: 1.1rem; font-weight: 600; border-radius: 50px; border: none; cursor: pointer; background-color: var(--testo); color: var(--sfondo-scuro); transition: opacity 0.4s, transform 0.4s; transform: scale(1); }
         #start-button.hidden, #share-button.hidden, #repeat-button.hidden { opacity: 0; transform: scale(0.8); pointer-events: none; }
         
-        /* NUOVO: Contenitore per allineare gli switch */
         .switch-container {
             display: flex;
             justify-content: center;
@@ -99,6 +100,7 @@
         <div class="display-area">
             <div id="info-display">Scegli la modalità e inizia</div>
             <div class="stats-container">
+                <!-- Record displays will be managed by JS -->
                 <div id="record-facile-display"></div>
                 <div id="record-normale-display"></div>
                 <div id="record-avanzato-display"></div>
@@ -132,7 +134,6 @@
     </div>
 
     <script>
-        // Il codice JavaScript rimane invariato
         const coloriBase = ['rosso', 'verde', 'blu', 'giallo', 'viola', 'arancione', 'rosa', 'ciano', 'lime'];
         
         let sequenzaCorretta = [], sequenzaUtente = [];
@@ -180,10 +181,26 @@
             recordFacile = parseInt(localStorage.getItem('recordMemoriaFacile') || '0', 10);
             recordNormale = parseInt(localStorage.getItem('recordMemoriaNormale') || '0', 10);
             recordAvanzato = parseInt(localStorage.getItem('recordMemoriaAvanzata') || '0', 10);
-            aggiornaDisplayRecord();
+            aggiornaTestoRecord();
+        }
+        
+        // NEW: Function to show only the relevant record
+        function aggiornaVisibilitaRecord() {
+            recordFacileDisplay.style.display = 'none';
+            recordNormaleDisplay.style.display = 'none';
+            recordAvanzatoDisplay.style.display = 'none';
+
+            if (modalitaFacile) {
+                recordFacileDisplay.style.display = 'block';
+            } else if (modalitaAvanzata) {
+                recordAvanzatoDisplay.style.display = 'block';
+            } else {
+                recordNormaleDisplay.style.display = 'block';
+            }
         }
 
-        function aggiornaDisplayRecord() {
+        // RENAMED: This function now only updates the text content
+        function aggiornaTestoRecord() {
             recordFacileDisplay.textContent = `😇 Record Facile: ${recordFacile}`;
             recordNormaleDisplay.textContent = `🏆 Record Normale: ${recordNormale}`;
             recordAvanzatoDisplay.textContent = `🚀 Record Avanzato: ${recordAvanzato}`;
@@ -203,13 +220,19 @@
         
         easyModeToggle.addEventListener('change', (e) => {
             modalitaFacile = e.target.checked;
-            if (modalitaFacile) advancedModeToggle.checked = false;
-            modalitaAvanzata = false;
+            if (modalitaFacile) {
+                advancedModeToggle.checked = false;
+                modalitaAvanzata = false;
+            }
+            aggiornaVisibilitaRecord(); // MODIFIED: Update visibility on toggle
         });
         advancedModeToggle.addEventListener('change', (e) => {
             modalitaAvanzata = e.target.checked;
-            if (modalitaAvanzata) easyModeToggle.checked = false;
-            modalitaFacile = false;
+            if (modalitaAvanzata) {
+                easyModeToggle.checked = false;
+                modalitaFacile = false;
+            }
+            aggiornaVisibilitaRecord(); // MODIFIED: Update visibility on toggle
         });
         
         function avviaGioco() {
@@ -228,6 +251,7 @@
             infoDisplay.style.color = 'var(--testo)';
             aggiornaDisplayVite();
             aggiornaDisplayAiuti();
+            viteDisplay.style.display = modalitaFacile || modalitaAvanzata ? 'none' : 'block';
             aiutiDisplay.style.display = modalitaFacile ? 'block' : 'none';
 
             if (modalitaAvanzata) { mischiaDisposizioneColori(); } 
@@ -362,7 +386,8 @@
             } else {
                 infoDisplay.textContent = `Hai perso! 😭 Punteggio: ${punteggioFinale}`;
             }
-            caricaRecord();
+            caricaRecord(); // This reloads all records and updates their text
+            aggiornaVisibilitaRecord(); // Ensure the correct one is visible
             
             startButton.textContent = 'Ricomincia';
             startButton.classList.remove('hidden');
@@ -371,6 +396,7 @@
             easyModeToggle.disabled = false;
             advancedModeToggle.disabled = false;
             soundToggle.disabled = false;
+            viteDisplay.style.display = 'block'; // Show vite again
         }
 
         async function condividiRisultato() {
@@ -398,8 +424,10 @@
         // --- Setup Iniziale ---
         generaPulsanti();
         caricaRecord();
+        aggiornaVisibilitaRecord(); // MODIFIED: Set initial record visibility
         aggiornaDisplayVite();
         aggiornaDisplayAiuti();
+        viteDisplay.style.display = 'none';
         aiutiDisplay.style.display = 'none';
     </script>
     

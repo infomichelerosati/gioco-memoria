@@ -3,14 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Memoria Musicale e Visiva</title>
-    
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#2c3e50">
+    <title>Memoria Musicale e Visiva - Deluxe</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     
     <style>
         :root {
@@ -19,69 +16,114 @@
             --c-rosa: #ec407a; --c-ciano: #26a69a; --c-lime: #c0ca33;
             --sfondo-scuro: #2c3e50; --sfondo-chiaro: #34495e;
             --testo: #ecf0f1;
+            --vetro-bg: rgba(44, 62, 80, 0.6);
+            --vetro-border: rgba(236, 240, 241, 0.2);
         }
 
-        @keyframes rainbow-text { 0% { color: hsl(0, 100%, 80%); } 100% { color: hsl(360, 100%, 80%); } }
-        @keyframes shake-error { 0%, 100% { transform: translateX(0); } 25%, 75% { transform: translateX(-5px); } 50% { transform: translateX(5px); } }
-        @keyframes new-record-glow { 0%, 100% { text-shadow: 0 0 8px #fff, 0 0 10px var(--c-giallo); color: #fff; } 50% { text-shadow: none; color: var(--testo); } }
-        
+        /* --- KEYFRAMES PER ANIMAZIONI --- */
+        @keyframes pop-in {
+            0% { opacity: 0; transform: scale(0.5); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+        @keyframes shake-error { 0%, 100% { transform: translateX(0); } 25%, 75% { transform: translateX(-8px); } 50% { transform: translateX(8px); } }
+        @keyframes new-record-glow { 0%, 100% { text-shadow: 0 0 10px #fff, 0 0 15px var(--c-giallo); color: #fff; } 50% { text-shadow: none; color: var(--testo); } }
+        @keyframes feedback-pop {
+            0% { opacity: 0; transform: scale(0.7) rotate(-15deg); }
+            50% { opacity: 1; transform: scale(1.1) rotate(5deg); }
+            100% { opacity: 0; transform: scale(0.8) rotate(-10deg); }
+        }
+
         body {
             font-family: 'Poppins', sans-serif;
-            background-color: var(--sfondo-scuro);
-            background-image: radial-gradient(circle, var(--sfondo-chiaro) 0%, var(--sfondo-scuro) 100%);
+            background: var(--sfondo-scuro);
             color: var(--testo);
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
             margin: 0;
             text-align: center;
             overflow: hidden;
+            position: relative;
         }
         
-        #powered-by {
-            position: fixed; top: 10px; left: 10px; padding: 5px 10px;
-            background-color: rgba(0, 0, 0, 0.2); border-radius: 5px;
-            font-size: 6pt; font-weight: bold; animation: rainbow-text 8s linear infinite; z-index: 10;
+        /* --- SFONDO ANIMATO --- */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 200vw;
+            height: 200vh;
+            background-image: 
+                radial-gradient(circle at 20% 20%, var(--c-blu), transparent 30%),
+                radial-gradient(circle at 80% 30%, var(--c-viola), transparent 30%),
+                radial-gradient(circle at 50% 80%, var(--c-rosso), transparent 30%);
+            transform: translate(-50%, -50%);
+            animation: rotate-bg 60s linear infinite;
+            opacity: 0.2;
+        }
+        @keyframes rotate-bg { from { transform: translate(-50%, -50%) rotate(0deg); } to { transform: translate(-50%, -50%) rotate(360deg); } }
+
+        /* --- CONTENITORE PRINCIPALE (EFFETTO VETRO) --- */
+        .game-container {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+            padding: 2rem;
+            background: var(--vetro-bg);
+            border-radius: 20px;
+            border: 1px solid var(--vetro-border);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
         }
 
-        .game-container { display: flex; flex-direction: column; align-items: center; gap: 1rem; }
-        .display-area { min-height: 100px; display: flex; flex-direction: column; justify-content: center; margin-top: 1rem; }
-        #info-display { font-size: 1.5rem; font-weight: 600; transition: color 0.3s; }
+        .display-area { min-height: 80px; display: flex; flex-direction: column; justify-content: center; }
+        #info-display { font-size: 1.8rem; font-weight: 700; transition: color 0.3s; }
 
         .stats-container { display: flex; flex-direction: column; align-items: center; gap: 5px; margin-top: 10px; }
-        #record-facile-display, #record-normale-display, #record-avanzato-display { font-size: 0.9rem; color: #bdc3c7; }
-        .new-record-animation { animation: new-record-glow 1.5s ease-in-out; }
-        #vite-display, #aiuti-display { font-size: 0.9rem; color: #bdc3c7; }
+        #record-facile-display, #record-normale-display, #record-avanzato-display { font-size: 1rem; color: #bdc3c7; font-weight: 400; }
+        #vite-display, #aiuti-display { font-size: 1rem; color: #bdc3c7; }
 
         .game-board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; width: 340px; }
         .game-board.error { animation: shake-error 0.4s; }
 
         .tasto {
             width: 100px; height: 100px; border-radius: 50%; 
-            background: linear-gradient(145deg, rgba(255,255,255,0.1), rgba(0,0,0,0.2));
+            background-image: linear-gradient(145deg, rgba(255,255,255,0.15), rgba(0,0,0,0.25));
             box-shadow: 5px 5px 15px rgba(0,0,0,0.3), -5px -5px 15px rgba(255,255,255,0.05);
-            cursor: pointer; transition: all 0.1s ease-out;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
             display: flex; justify-content: center; align-items: center;
+            opacity: 0;
+            transform: scale(0.5);
+            animation: pop-in 0.5s ease-out forwards;
+            animation-delay: var(--animation-delay, 0ms);
         }
-        .tasto div { width: 90%; height: 90%; border-radius: 50%; transition: background-color 0.2s, filter 0.2s, box-shadow 0.2s; }
-        .tasto:active { box-shadow: inset 5px 5px 15px rgba(0,0,0,0.3), inset -5px -5px 15px rgba(255,255,255,0.05); transform: scale(0.98); }
-        .tasto.illuminato div { filter: brightness(2.5); box-shadow: 0 0 25px currentColor, 0 0 40px currentColor; }
+        .tasto:hover { transform: scale(1.05); }
+        .tasto:active { transform: scale(0.95); box-shadow: inset 5px 5px 15px rgba(0,0,0,0.3), inset -5px -5px 15px rgba(255,255,255,0.05); }
+        .tasto.illuminato { 
+            box-shadow: 0 0 25px currentColor, 0 0 40px currentColor; 
+            transform: scale(1.05);
+            filter: brightness(1.2);
+        }
+        .tasto svg { width: 45px; height: 45px; color: rgba(255, 255, 255, 0.9); transition: all 0.2s; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3)); }
+        .tasto.illuminato svg { color: #fff; }
 
-        /* MODIFIED: Reduced gap to bring controls closer */
-        .controlli { margin-top: 1rem; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+        .controlli { margin-top: 1rem; display: flex; flex-direction: column; align-items: center; gap: 1rem; }
         .fine-partita-bottoni { display: flex; gap: 15px; }
-        #start-button, #share-button, #repeat-button { padding: 10px 20px; font-size: 1.1rem; font-weight: 600; border-radius: 50px; border: none; cursor: pointer; background-color: var(--testo); color: var(--sfondo-scuro); transition: opacity 0.4s, transform 0.4s; transform: scale(1); }
+        #start-button, #share-button, #repeat-button { 
+            padding: 12px 25px; font-size: 1.1rem; font-weight: 600; border-radius: 50px; border: none; cursor: pointer; 
+            background: var(--testo); color: var(--sfondo-scuro); 
+            transition: all 0.3s ease; transform: scale(1); 
+        }
+        #start-button:hover, #share-button:hover, #repeat-button:hover { transform: scale(1.05); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
         #start-button.hidden, #share-button.hidden, #repeat-button.hidden { opacity: 0; transform: scale(0.8); pointer-events: none; }
         
-        .switch-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 20px;
-            margin-top: 10px;
-        }
-
+        .switch-container { display: flex; justify-content: center; align-items: center; gap: 20px; margin-top: 10px; }
         .control-switch { display: flex; flex-direction: column; align-items: center; gap: 5px; font-size: 0.8rem; }
         .switch { position: relative; display: inline-block; width: 50px; height: 28px; }
         .switch input { display: none; }
@@ -90,17 +132,26 @@
         input:checked + .slider { background-color: var(--c-verde); }
         input:disabled + .slider { background-color: #555; cursor: not-allowed; }
         input:checked + .slider:before { transform: translateX(22px); }
+
+        #feedback-icon-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 10rem;
+            pointer-events: none;
+            opacity: 0;
+        }
+        #feedback-icon-container.show {
+            animation: feedback-pop 0.8s ease-in-out;
+        }
     </style>
 </head>
 <body>
-
-    <div id="powered-by">Powered By Michele Rosati</div>
-
     <div class="game-container">
         <div class="display-area">
             <div id="info-display">Scegli la modalità e inizia</div>
             <div class="stats-container">
-                <!-- Record displays will be managed by JS -->
                 <div id="record-facile-display"></div>
                 <div id="record-normale-display"></div>
                 <div id="record-avanzato-display"></div>
@@ -115,27 +166,32 @@
                 <button id="share-button" class="hidden">Condividi 📤</button>
             </div>
             <button id="repeat-button" class="hidden">Mostra di Nuovo 💡</button>
-            
             <div class="switch-container">
-                <div class="control-switch">
-                    <span>Suoni</span>
-                    <label class="switch"><input type="checkbox" id="sound-toggle" checked><span class="slider"></span></label>
-                </div>
-                <div class="control-switch">
-                    <span>Facile</span>
-                    <label class="switch"><input type="checkbox" id="easy-mode-toggle"><span class="slider"></span></label>
-                </div>
-                <div class="control-switch">
-                    <span>Avanzata</span>
-                    <label class="switch"><input type="checkbox" id="advanced-mode-toggle"><span class="slider"></span></label>
-                </div>
+                <div class="control-switch"><span>Suoni</span><label class="switch"><input type="checkbox" id="sound-toggle" checked><span class="slider"></span></label></div>
+                <div class="control-switch"><span>Facile</span><label class="switch"><input type="checkbox" id="easy-mode-toggle"><span class="slider"></span></label></div>
+                <div class="control-switch"><span>Avanzata</span><label class="switch"><input type="checkbox" id="advanced-mode-toggle"><span class="slider"></span></label></div>
             </div>
         </div>
     </div>
+    
+    <div id="feedback-icon-container"></div>
 
     <script>
         const coloriBase = ['rosso', 'verde', 'blu', 'giallo', 'viola', 'arancione', 'rosa', 'ciano', 'lime'];
         
+        const iconeSvg = {
+            rosso: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>`,
+            verde: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2z"/></svg>`,
+            blu: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c-5.52 0-10 4.48-10 10s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>`,
+            // MODIFIED: Changed icon for 'giallo' to be unique
+            giallo: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M7 2v11h3v9l7-12h-4l4-8H7z"/></svg>`,
+            viola: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"/></svg>`,
+            arancione: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M6.76 4.84l-1.8-1.79-1.41 1.41 1.79 1.79 1.42-1.41zM4 10.5H1v2h3v-2zm9-9.95h-2V3.5h2V.55zm7.45 3.91l-1.41-1.41-1.79 1.79 1.41 1.41 1.79-1.79zm-1.41 11.32l1.79 1.8 1.41-1.41-1.8-1.79-1.4 1.4zM20 10.5v2h3v-2h-3zm-8 8.5h2v3h-2v-3zm-7.45-3.91l1.41 1.41 1.79-1.79-1.41-1.41-1.79 1.79zM12 5.5c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6z"/></svg>`,
+            rosa: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 14c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm-8-6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm16 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>`,
+            ciano: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1.5L1 6v12l11 4.5L23 18V6L12 1.5zm0 15.69L5.46 15 12 12.19 18.54 15 12 17.19zM21 16.31L12 20.13V11L21 7.69v8.62z"/></svg>`,
+            lime: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>`,
+        };
+
         let sequenzaCorretta = [], sequenzaUtente = [];
         let livello = 0, recordFacile = 0, recordNormale = 0, recordAvanzato = 0, vite = 0, aiutiRimasti = 0;
         let punteggioFinale = 0;
@@ -154,6 +210,7 @@
         const advancedModeToggle = document.getElementById('advanced-mode-toggle');
         const shareButton = document.getElementById('share-button');
         const repeatButton = document.getElementById('repeat-button');
+        const feedbackIconContainer = document.getElementById('feedback-icon-container');
 
         let audioCtx;
         const suoni = {};
@@ -164,15 +221,15 @@
 
         function generaPulsanti() {
             gameBoard.innerHTML = '';
-            coloriBase.forEach(colore => {
+            coloriBase.forEach((colore, index) => {
                 const tasto = document.createElement('div');
                 tasto.classList.add('tasto');
                 tasto.id = `tasto-${colore}`;
                 tasto.dataset.colore = colore;
+                tasto.style.backgroundColor = `var(--c-${colore})`;
                 tasto.style.color = `var(--c-${colore})`;
-                const beforeElement = document.createElement('div');
-                beforeElement.style.backgroundColor = `var(--c-${colore})`;
-                tasto.appendChild(beforeElement);
+                tasto.style.setProperty('--animation-delay', `${index * 50}ms`);
+                tasto.innerHTML = iconeSvg[colore];
                 gameBoard.appendChild(tasto);
             });
         }
@@ -184,22 +241,15 @@
             aggiornaTestoRecord();
         }
         
-        // NEW: Function to show only the relevant record
         function aggiornaVisibilitaRecord() {
             recordFacileDisplay.style.display = 'none';
             recordNormaleDisplay.style.display = 'none';
             recordAvanzatoDisplay.style.display = 'none';
-
-            if (modalitaFacile) {
-                recordFacileDisplay.style.display = 'block';
-            } else if (modalitaAvanzata) {
-                recordAvanzatoDisplay.style.display = 'block';
-            } else {
-                recordNormaleDisplay.style.display = 'block';
-            }
+            if (modalitaFacile) recordFacileDisplay.style.display = 'block';
+            else if (modalitaAvanzata) recordAvanzatoDisplay.style.display = 'block';
+            else recordNormaleDisplay.style.display = 'block';
         }
 
-        // RENAMED: This function now only updates the text content
         function aggiornaTestoRecord() {
             recordFacileDisplay.textContent = `😇 Record Facile: ${recordFacile}`;
             recordNormaleDisplay.textContent = `🏆 Record Normale: ${recordNormale}`;
@@ -209,32 +259,30 @@
         function aggiornaDisplayVite() { viteDisplay.textContent = `❤️ Vite: ${vite}`; }
         function aggiornaDisplayAiuti() { aiutiDisplay.textContent = `💡 Aiuti: ${aiutiRimasti}`; }
         
-        function inizializzaAudio() { if (audioCtx) return; audioCtx = new (window.AudioContext || window.webkitAudioContext)(); for (const colore in frequenze) { const oscillator = audioCtx.createOscillator(); oscillator.type = 'sine'; oscillator.frequency.setValueAtTime(frequenze[colore], audioCtx.currentTime); const gainNode = audioCtx.createGain(); gainNode.gain.setValueAtTime(0, audioCtx.currentTime); oscillator.connect(gainNode); gainNode.connect(audioCtx.destination); oscillator.start(); suoni[colore] = gainNode; } }
-        function riproduciSuono(colore) { if (!suoniAbilitati || !audioCtx) return; const gainNode = suoni[colore]; gainNode.gain.cancelScheduledValues(audioCtx.currentTime); gainNode.gain.setValueAtTime(gainNode.gain.value, audioCtx.currentTime); gainNode.gain.linearRampToValueAtTime(0.3, audioCtx.currentTime + 0.05); gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.2); }
+        function inizializzaAudio() { 
+            if (audioCtx) return; 
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)(); 
+            for (const colore in frequenze) { 
+                const oscillator = audioCtx.createOscillator(); 
+                oscillator.type = 'sine'; 
+                oscillator.frequency.setValueAtTime(frequenze[colore], audioCtx.currentTime); 
+                const gainNode = audioCtx.createGain(); 
+                gainNode.gain.setValueAtTime(0, audioCtx.currentTime); 
+                oscillator.connect(gainNode); 
+                gainNode.connect(audioCtx.destination); 
+                oscillator.start(); 
+                suoni[colore] = gainNode; 
+            } 
+        }
+        function riproduciSuono(colore) { 
+            if (!suoniAbilitati || !audioCtx) return; 
+            const gainNode = suoni[colore]; 
+            gainNode.gain.cancelScheduledValues(audioCtx.currentTime); 
+            gainNode.gain.setValueAtTime(gainNode.gain.value, audioCtx.currentTime); 
+            gainNode.gain.linearRampToValueAtTime(0.3, audioCtx.currentTime + 0.05); 
+            gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.2); 
+        }
 
-        startButton.addEventListener('click', avviaGioco);
-        shareButton.addEventListener('click', condividiRisultato);
-        repeatButton.addEventListener('click', usaAiutoMostraSequenza);
-        gameBoard.addEventListener('click', gestisciClickUtente);
-        soundToggle.addEventListener('change', (e) => { suoniAbilitati = e.target.checked; if(suoniAbilitati) inizializzaAudio(); });
-        
-        easyModeToggle.addEventListener('change', (e) => {
-            modalitaFacile = e.target.checked;
-            if (modalitaFacile) {
-                advancedModeToggle.checked = false;
-                modalitaAvanzata = false;
-            }
-            aggiornaVisibilitaRecord(); // MODIFIED: Update visibility on toggle
-        });
-        advancedModeToggle.addEventListener('change', (e) => {
-            modalitaAvanzata = e.target.checked;
-            if (modalitaAvanzata) {
-                easyModeToggle.checked = false;
-                modalitaFacile = false;
-            }
-            aggiornaVisibilitaRecord(); // MODIFIED: Update visibility on toggle
-        });
-        
         function avviaGioco() {
             livello = 0;
             vite = modalitaFacile ? 2 : 0;
@@ -286,12 +334,11 @@
         async function mostraSequenza() {
             gameBoard.style.pointerEvents = 'none';
             repeatButton.classList.add('hidden');
-            let tempoIlluminato = modalitaAvanzata ? 400 : 500;
-            let pausaTraTasti = modalitaAvanzata ? 150 : 200;
+            let tempoIlluminato = modalitaAvanzata ? 350 : 450;
+            let pausaTraTasti = modalitaAvanzata ? 125 : 175;
 
-            if (livello >= 15) { tempoIlluminato = 250; pausaTraTasti = 75; } 
-            else if (livello >= 10) { tempoIlluminato = 300; pausaTraTasti = 100; }
-            else if (livello >= 5) { tempoIlluminato = 400; pausaTraTasti = 150; }
+            if (livello >= 10) { tempoIlluminato = 250; pausaTraTasti = 100; }
+            else if (livello >= 5) { tempoIlluminato = 350; pausaTraTasti = 150; }
             
             await new Promise(resolve => setTimeout(resolve, 1000));
             for(const colore of sequenzaCorretta) {
@@ -328,7 +375,8 @@
                 return;
             }
             if (sequenzaUtente.length === sequenzaCorretta.length) {
-                infoDisplay.textContent = 'Ottimo! ✅';
+                infoDisplay.textContent = 'Ottimo!';
+                mostraFeedbackIcona('success');
                 gameBoard.style.pointerEvents = 'none';
                 repeatButton.classList.add('hidden');
                 setTimeout(prossimoLivello, 1200);
@@ -342,12 +390,14 @@
                 const nuovoColore = coloriMisti[index];
                 tasto.id = `tasto-${nuovoColore}`;
                 tasto.dataset.colore = nuovoColore;
+                tasto.style.backgroundColor = `var(--c-${nuovoColore})`;
                 tasto.style.color = `var(--c-${nuovoColore})`;
-                tasto.querySelector('div').style.backgroundColor = `var(--c-${nuovoColore})`;
+                tasto.innerHTML = iconeSvg[nuovoColore];
             });
         }
 
         function gestisciErrore() {
+            mostraFeedbackIcona('error');
             gameBoard.classList.add('error');
             setTimeout(() => gameBoard.classList.remove('error'), 500);
             if (vite > 0) {
@@ -366,17 +416,12 @@
         function fineGiocoDefinitivo() {
             inGioco = false;
             infoDisplay.style.color = 'var(--c-rosso)';
-            
             punteggioFinale = livello - 1;
             
             let recordKey, recordValue, recordDisplayElement;
-            if(modalitaFacile) {
-                recordKey = 'recordMemoriaFacile'; recordValue = recordFacile; recordDisplayElement = recordFacileDisplay;
-            } else if (modalitaAvanzata) {
-                recordKey = 'recordMemoriaAvanzata'; recordValue = recordAvanzato; recordDisplayElement = recordAvanzatoDisplay;
-            } else {
-                recordKey = 'recordMemoriaNormale'; recordValue = recordNormale; recordDisplayElement = recordNormaleDisplay;
-            }
+            if(modalitaFacile) { recordKey = 'recordMemoriaFacile'; recordValue = recordFacile; recordDisplayElement = recordFacileDisplay; }
+            else if (modalitaAvanzata) { recordKey = 'recordMemoriaAvanzata'; recordValue = recordAvanzato; recordDisplayElement = recordAvanzatoDisplay; }
+            else { recordKey = 'recordMemoriaNormale'; recordValue = recordNormale; recordDisplayElement = recordNormaleDisplay; }
 
             if (punteggioFinale > recordValue) {
                 localStorage.setItem(recordKey, punteggioFinale);
@@ -386,8 +431,8 @@
             } else {
                 infoDisplay.textContent = `Hai perso! 😭 Punteggio: ${punteggioFinale}`;
             }
-            caricaRecord(); // This reloads all records and updates their text
-            aggiornaVisibilitaRecord(); // Ensure the correct one is visible
+            caricaRecord();
+            aggiornaVisibilitaRecord();
             
             startButton.textContent = 'Ricomincia';
             startButton.classList.remove('hidden');
@@ -396,7 +441,18 @@
             easyModeToggle.disabled = false;
             advancedModeToggle.disabled = false;
             soundToggle.disabled = false;
-            viteDisplay.style.display = 'block'; // Show vite again
+            viteDisplay.style.display = 'block';
+        }
+        
+        function mostraFeedbackIcona(type) {
+            const icon = type === 'success' ? '✅' : '❌';
+            const color = type === 'success' ? 'var(--c-verde)' : 'var(--c-rosso)';
+            feedbackIconContainer.innerHTML = icon;
+            feedbackIconContainer.style.color = color;
+            feedbackIconContainer.classList.add('show');
+            setTimeout(() => {
+                feedbackIconContainer.classList.remove('show');
+            }, 800);
         }
 
         async function condividiRisultato() {
@@ -405,8 +461,11 @@
             if (modalitaAvanzata) modalitaTesto = 'Avanzata';
             const linkGioco = window.location.href;
             const testoDaCondividere = `Ho raggiunto il livello ${punteggioFinale} in Memoria Musicale e Visiva (modalità ${modalitaTesto})! 🧠🎵\n\nRiesci a battere il mio record? Gioca anche tu:\n${linkGioco}`;
-            if (navigator.share) { try { await navigator.share({ title: 'Nuovo Punteggio a Memoria Musicale!', text: testoDaCondividere }); } catch (err) { console.error('Errore condivisione:', err); } } 
-            else { try { await navigator.clipboard.writeText(testoDaCondividere); alert('Risultato copiato negli appunti!'); } catch (err) { console.error('Errore copia:', err); } }
+            try { await navigator.share({ title: 'Nuovo Punteggio a Memoria Musicale!', text: testoDaCondividere }); } 
+            catch (err) { 
+                try { await navigator.clipboard.writeText(testoDaCondividere); alert('Risultato copiato negli appunti!'); } 
+                catch (copyErr) { console.error('Errore copia:', copyErr); }
+            }
         }
 
         function usaAiutoMostraSequenza() {
@@ -416,28 +475,24 @@
                 sequenzaUtente = [];
                 mostraSequenza();
             }
-            if (aiutiRimasti === 0) {
-                repeatButton.classList.add('hidden');
-            }
+            if (aiutiRimasti === 0) repeatButton.classList.add('hidden');
         }
         
-        // --- Setup Iniziale ---
+        startButton.addEventListener('click', avviaGioco);
+        shareButton.addEventListener('click', condividiRisultato);
+        repeatButton.addEventListener('click', usaAiutoMostraSequenza);
+        gameBoard.addEventListener('click', gestisciClickUtente);
+        soundToggle.addEventListener('change', (e) => { suoniAbilitati = e.target.checked; if(suoniAbilitati) inizializzaAudio(); });
+        easyModeToggle.addEventListener('change', (e) => { modalitaFacile = e.target.checked; if (modalitaFacile) { advancedModeToggle.checked = false; modalitaAvanzata = false; } aggiornaVisibilitaRecord(); });
+        advancedModeToggle.addEventListener('change', (e) => { modalitaAvanzata = e.target.checked; if (modalitaAvanzata) { easyModeToggle.checked = false; modalitaFacile = false; } aggiornaVisibilitaRecord(); });
+
         generaPulsanti();
         caricaRecord();
-        aggiornaVisibilitaRecord(); // MODIFIED: Set initial record visibility
+        aggiornaVisibilitaRecord();
         aggiornaDisplayVite();
         aggiornaDisplayAiuti();
         viteDisplay.style.display = 'none';
         aiutiDisplay.style.display = 'none';
     </script>
-    
-    <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js').then(r => console.log('ServiceWorker OK')).catch(e => console.log('ServiceWorker Fallito:', e));
-        });
-      }
-    </script>
-
 </body>
 </html>
